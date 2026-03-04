@@ -34,4 +34,27 @@ evaluationRouter.post('/', async(req, res) => {
 
 evaluationRouter.get('/', async(req, res) => {
     const {evaluationId} = req.body;
+    try{
+        const evaluationResult = await prisma.evaluationResult.findFirst({
+            where : {evaluationId : evaluationId}
+        });
+        if(!evaluationId){
+            res.status(403).json({
+                success : false,
+                error : `The result is not found for the evaluation id - ${evaluationId}`
+            });
+            return;
+        }
+        res.json({
+            success : true,
+            data : evaluationResult
+        });
+    }
+    catch(e){
+        console.log(e);
+        res.status(500).json({
+            success : false,
+            error : "Internal Server Error"
+        })
+    }
 })

@@ -1,0 +1,85 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                String @id @default(uuid())
+  username          String @unique
+  passwordHash          String
+  createdAt         DateTime @default(now())
+
+  documents         Document[] @relation("users")
+  query             Query[] @relation("userQuery")
+}
+
+model Document {
+  id                String @id @default(uuid())
+  filename          String
+  status            DocumentStatus @default(UPLOAD)
+  totalChunks       Int @default(0)
+  processedChunks   Int @default(0)
+  userId            String
+  createdAt         DateTime @default(now())
+
+  chunks            Chunk[] @relation("documentChunk")
+  user              User @relation("users", fields: [userId], references: [id])
+  query             Query[] @relation("documentQuery")
+
+
+  @@index([userId])
+  
+}
+enum DocumentStatus {
+  UPLOAD
+  SPLIT
+  EMBEDDING
+  COMPLETE
+  FAILED
+}
+
+model Chunk{
+  id                 String @id @default(uuid())
+  content            String
+  status             ChunkStatus @default(PENDING)
+  createdAt          DateTime @default(now())
+  documentId         String
+  embedding          Unsupported("vector")?
+
+  document           Document @relation("documentChunk", fields: [documentId], references: [id])
+
+  @@index([documentId])
+
+}
+
+enum ChunkStatus {
+  PENDING
+  PROCESSING
+  COMPLETE
+  FAILED
+}
+
+model Query{
+  id                String @id @default(uuid())
+  question          String
+  answer            String
+  userId            String
+  documentId        String
+  createdAt         DateTime @default(now())
+
+  document     Document @relation("documentQuery", fields: [documentId], references: [id])
+  user         User  @relation("userQuery", fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([documentId])
+}

@@ -1,0 +1,53 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Evaluation{
+  id                String @id @default(uuid())
+  context           String
+  query             String
+  answer            String
+  model             String
+  status            EvaluationStatus @default(PENDING)
+  error             String?
+
+  createdAt         DateTime @default(now())
+  completedAt       DateTime?
+
+  result            EvaluationResult?
+
+  @@index([status])
+}
+
+model EvaluationResult {
+  id                String   @id @default(uuid())
+
+  evaluationId      String   @unique
+  evaluation        Evaluation @relation(fields: [evaluationId], references: [id])
+
+  groundednessScore Int
+  hallucinationFlag Boolean
+  reasoning         String
+
+  createdAt         DateTime @default(now())
+}
+
+enum EvaluationStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+  
+

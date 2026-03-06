@@ -3,6 +3,7 @@ import { prisma } from "../lib/prisma.js";
 import { generateEmbeddings } from "../ai/generateEmbeddings.js";
 import { openai } from "../ai/openai.js";
 import { authMiddleware } from "../middleware/auth.js";
+import axios from "axios";
 
 export const queryRouter = Router();
 queryRouter.use(authMiddleware);
@@ -60,7 +61,7 @@ queryRouter.post('/', async (req, res) => {
         });
         const result = completion.choices[0]?.message.content;
         if(result){
-            await prisma.query.create({
+            const queryResult = await prisma.query.create({
                 data : {
                     question : query,
                     answer : result,
@@ -68,12 +69,21 @@ queryRouter.post('/', async (req, res) => {
                     documentId : doc.id as string
                 }
             });
+            const evaluation = await axios.post('http://localhost:4000/evaluation', {
+                model : model,
+                query : queryResult.question,
+                answer : queryResult.answer,
+                context : context 
+            });
+            if(!evaluation){
+                throw new Error("Cannot fetch Evaluation");
+            }
+            const evaluationResult = await waitForGetData(evaluation.data.evaluationId);
+            console.log(evaluationResult.data);
             res.json({
                 success : true,
                 answer : result,
-                question : query,
-                context : context,
-                model : model
+                evaluations : evaluationResult.data
             });
         }
 
@@ -86,3 +96,16 @@ queryRouter.post('/', async (req, res) => {
         })
     }
 });
+
+const waitForGetData = async(evaluationId : string) => {
+    const mxAttempts = 100, delay = 500;
+    for(let i = 0; i < mxAttempts; i++){
+        console.log(`polling - ${i}`);
+        const res = await axios.get(`http://localhost:4000/evaluation/${evaluationId}`);
+        if(res.data.data && res.data.success === true){
+            return res.data;
+        }
+        await new Promise((r) => setTimeout(r, delay));
+    }
+    return null;
+}

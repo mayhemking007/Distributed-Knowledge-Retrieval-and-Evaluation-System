@@ -9,4 +9,4 @@ app.use('/evaluation', evaluationRouter);
 
 
 
-app.listen(4000, () => {console.log("Server running on port 4000")})
+app.listen(process.env.SERVER_PORT, () => {console.log(`Server running on port ${process.env.SERVER_PORT}`)});

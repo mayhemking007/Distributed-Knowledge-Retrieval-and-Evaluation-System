@@ -1,0 +1,31 @@
+version: "3.9"
+
+services:
+
+  dip-api:
+    build: ./distributed-knowledge-indexing-pipeline
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./distributed-knowledge-indexing-pipeline/.env
+
+  dip-worker:
+    build:
+      context: ./distributed-knowledge-indexing-pipeline
+      dockerfile: Dockerfile.worker
+    env_file:
+      - ./distributed-knowledge-indexing-pipeline/.env
+
+  evaluation-api:
+    build: ./evaluation-service
+    ports:
+      - "4000:4000"
+    env_file:
+      - ./evaluation-service/.env
+
+  evaluation-worker:
+    build:
+      context: ./evaluation-service
+      dockerfile: Dockerfile.worker
+    env_file:
+      - ./evaluation-service/.env

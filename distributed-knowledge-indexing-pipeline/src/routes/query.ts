@@ -1,9 +1,12 @@
+import dotenv from "dotenv";
 import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 import { generateEmbeddings } from "../ai/generateEmbeddings.js";
 import { openai } from "../ai/openai.js";
 import { authMiddleware } from "../middleware/auth.js";
 import axios from "axios";
+
+dotenv.config();
 
 export const queryRouter = Router();
 queryRouter.use(authMiddleware);
@@ -69,7 +72,7 @@ queryRouter.post('/', async (req, res) => {
                     documentId : doc.id as string
                 }
             });
-            const evaluation = await axios.post('http://localhost:4000/evaluation', {
+            const evaluation = await axios.post(process.env.EVALUATION_URL as string, {
                 model : model,
                 query : queryResult.question,
                 answer : queryResult.answer,
@@ -101,7 +104,7 @@ const waitForGetData = async(evaluationId : string) => {
     const mxAttempts = 100, delay = 500;
     for(let i = 0; i < mxAttempts; i++){
         console.log(`polling - ${i}`);
-        const res = await axios.get(`http://localhost:4000/evaluation/${evaluationId}`);
+        const res = await axios.get(`${process.env.EVALUATION_URL}/${evaluationId}`);
         if(res.data.data && res.data.success === true){
             return res.data;
         }

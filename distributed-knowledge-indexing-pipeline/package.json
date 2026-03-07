@@ -5,8 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "tsc -b && node ./dist/index.js",
-    "worker": "tsc -b && node ./dist/worker.js"
+    "build" : "tsc -b",
+    "start" : "node ./dist/index.js",
+    "worker": "node ./dist/worker.js"
   },
   "keywords": [],
   "author": "",
